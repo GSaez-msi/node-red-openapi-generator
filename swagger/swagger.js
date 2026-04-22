@@ -81,7 +81,9 @@ module.exports = function (RED) {
             resp.paths = {};
 
             // Update server URL to include the httpNodeRoot
-            if (httpNodeRoot && httpNodeRoot !== '/') {
+            const httpNodeRoot = RED.settings.httpNodeRoot || '/';
+
+            if (httpNodeRoot !== '/') {
                 resp.servers = resp.servers.map((server) => ({
                     ...server,
                     url: server.url.replace(/\/$/, '') + httpNodeRoot,
@@ -119,7 +121,7 @@ module.exports = function (RED) {
                             description,
                             tags: aryTags,
                             deprecated,
-                            parameters: [...parameters, ...additionalParams].map((param) => {
+                            parameters: [...parameters].map((param) => {
                                 const paramDef = {
                                     name: param.name,
                                     in: param.in,
