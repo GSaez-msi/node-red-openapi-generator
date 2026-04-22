@@ -1,0 +1,58 @@
+<script type="text/javascript">
+    RED.nodes.registerType('swaggertemplate', {
+        category: 'config',
+        defaults: {
+            name: { value: "" },
+            active: { value: true },
+            template: { value: "{}" }
+        },
+        label: function () {
+            return this.name || "OpenAPI Template";
+        },
+        oneditprepare: function () {
+            const editor = RED.editor.createEditor({
+                id: 'node-input-template-editor',
+                mode: 'ace/mode/json',
+                value: this.template || "{}"
+            });
+
+            this._editor = editor;
+        },
+        oneditsave: function () {
+            try {
+                const raw = this._editor.getValue();
+                JSON.parse(raw);
+                $("#node-input-template").val(raw);
+            } catch (e) {
+                RED.notify("Invalid JSON in OpenAPI template", "error");
+                throw e;
+            }
+        },
+        oneditcancel: function () {
+            if (this._editor) {
+                this._editor.destroy();
+                this._editor = null;
+            }
+        }
+    });
+</script>
+<script type="text/html">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" />
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-active"><i class="fa fa-check"></i> Active</label>
+        <input type="checkbox" id="node-input-active" style="width:auto;" />
+    </div>
+
+    <div class="form-row" style="margin-top:10px;">
+        <label><i class="fa fa-code"></i> OpenAPI Template</label>
+        <input type="hidden" id="node-input-template" />
+        <div
+            id="node-input-template-editor"
+            style="height:300px; border:1px solid #ccc;"
+        ></div>
+    </div>
+</script>

@@ -1,0 +1,51 @@
+<script type="text/html" data-help-name="swaggertemplate">
+    <p>
+        Defines a reusable OpenAPI 3.0 template used by the Swagger generator.
+    </p>
+
+    <p>
+        Only one active template node should be used at a time. I do NOT make myself responsible for any problems caused by you vomiting multiple templates into the same node-red.
+    </p>
+    <p>
+        The main utility behind this node is that you gain the ability to update your Swagger UI without needing to rely on the settings.js file, unlike the implementation from the package this code is forked from.
+        This is useful mostly when there's schemas you'd like to update, since you can just do so from the Node-Red editor. I am honestly surprised that this isn't a thing in the original.
+    </p>
+    <p>
+        Note: I have <code>NO</code> idea of what happens when you add default paths here. Yes, I'm half assing this node THAT much.
+    </p>
+    <h3>Example</h3>
+
+<pre>
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "My API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:1880/"
+      "description": "This server holds your mom."
+    }
+  ],
+  paths: {},
+  components: {
+    schemas: {
+        Ligma: {
+            type: "object",
+            properties: {
+                name: {
+                    type: "string",
+                    description: "Your name. Required by the API to recruit you to fight against Freddy Fazbear in Afghanistan."
+                },
+                creditCardInfo: {
+                    type: "string",
+                    description: "Since you'll be dying anyways, might as well donate your money to your corporate overlords, right?"
+                }
+            }
+        }
+    }
+  }
+}
+</pre>
+</script>

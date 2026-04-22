@@ -63,7 +63,19 @@ module.exports = function (RED) {
 
     RED.httpNode.get('/http-api/swagger.json', (req, res) => {
         try {
-            const { httpNodeRoot, openapi: { template = {}, parameters: additionalParams = [] } = {} } = RED.settings;
+            let template = {};
+
+            RED.nodes.eachNode((node) => {
+                if (node.type === "swaggertemplate" && node.active) {
+                    try {
+                        template = typeof node.template === "string"
+                            ? JSON.parse(node.template)
+                            : node.template;
+                    } catch (e) {
+                        console.error("Invalid swaggertemplate node JSON", e);
+                    }
+                }
+            });
 
             const resp = { ...DEFAULT_TEMPLATE, ...template };
             resp.paths = {};
