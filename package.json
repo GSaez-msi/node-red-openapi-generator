@@ -1,6 +1,6 @@
 {
     "name": "@ggggggggggggggggggggs/node-red-openapi-generator",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "description": "Simple nodes for straightforward swagger documentation, straight from your Node-Red! Based off of @5minds/node-red-openapi-generator, with several adjustments for your Swagger generating necessities.",
     "license": "Apache",
     "repository": {

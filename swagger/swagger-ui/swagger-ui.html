@@ -379,12 +379,24 @@
                 // Initialize dark mode
                 new DarkModeManager();
 
-                // Initialize Swagger UI
+                // Initialize Swagger UI (grab the JSON file)
+                let pathParts = window.location.pathname.split('/').filter(Boolean);
+
+                // Find and remove "swagger-ui" and everything after it (this is to allow dynamic base path support instead of the app consistently pointing to the base path even when the swagger.json is NOT served there.)
+                const swaggerUiIndex = pathParts.indexOf('swagger-ui');
+                if (swaggerUiIndex !== -1) {
+                    pathParts = pathParts.slice(0, swaggerUiIndex);
+                }
+                const appRoot = pathParts.join('/');
+
                 const ui = SwaggerUIBundle({
-                    url: `${window.location.origin}/http-api/swagger.json`,
+                    url: `${window.location.origin}${appRoot}/http-api/swagger.json`,
                     dom_id: '#swagger-ui',
                     deepLinking: true,
-                    presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIStandalonePreset
+                    ],
                     plugins: [SwaggerUIBundle.plugins.DownloadUrl],
                     layout: 'StandaloneLayout',
                 });

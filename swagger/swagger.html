@@ -20,6 +20,11 @@
         <span id="node-config-input-method"></span>
         <span id="node-config-input-path"></span>
     </div>
+    <div class="form-row">
+        <label for="node-config-input-customPath"><span>Custom API Path (optional)</span></label>
+        <input type="text" id="node-config-input-customPath" placeholder="Leave empty to use HTTP node path" style="width: 100%;">
+        <small style="display: block; margin-top: 5px;">Override the API path from the HTTP node. Use {paramName} for path parameters.</small>
+    </div>
 
     <div class="form-row">
         <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-swagger-tabs"></ul>
@@ -305,7 +310,7 @@
                 class: 'node-swagger-in-select',
                 style: 'max-width: 150px',
             }).appendTo(inSpan);
-            ['query', 'header'].forEach(function (opt) {
+            ['query', 'header', 'path'].forEach(function (opt) {
                 inSelect.append($('<option></option>').val(opt).text(opt));
             });
             inSelect.val(opts.in);
@@ -407,6 +412,23 @@
                     }
                     schemaRow.hide();
                     typeRow.show();
+                    // Path parameters are required by default
+                    if (i == 'path') {
+                        $(this)
+                            .parent()
+                            .parent()
+                            .parent()
+                            .find('.node-swagger-required')
+                            .prop('checked', true)
+                            .prop('disabled', true);
+                    } else {
+                        $(this)
+                            .parent()
+                            .parent()
+                            .parent()
+                            .find('.node-swagger-required')
+                            .prop('disabled', false);
+                    }
                 }
             });
 
@@ -521,37 +543,94 @@
                 .val(opts.description)
                 .appendTo(row2);
 
-            var rowPropHeader = $('<div/>', {
-                class: 'form-row node-swagger-propHeader-row',
+            var contentHeader = $('<div/>', {
+                class: 'form-row',
+                style: 'margin-top: 15px; margin-bottom: 5px;',
             }).appendTo(nameRows);
             $('<label/>', {
-                class: 'node-swagger-propHeader-label',
-                style: 'width: auto; font-weight: bold; margin-right: 10px',
+                style: 'font-weight: bold; width: auto;',
             })
-                .text('Properties')
-                .appendTo(rowPropHeader);
-            var addPropButton = $(
-                '<a href=#" class="red-ui-button red-ui-button-small" id="node-config-input-add-property"><i class="fa fa-plus"></i> Property</a>',
-            ).appendTo(rowPropHeader);
+                .text('Response Content Types')
+                .appendTo(contentHeader);
+            var addContentButton = $('<a/>', {
+                href: '#',
+                class: 'red-ui-button red-ui-button-small',
+                style: 'float: right;',
+            }).appendTo(contentHeader);
+            $('<i/>', { class: 'fa fa-plus' }).appendTo(addContentButton);
+            $('<span/>').text(' Add Content Type').appendTo(addContentButton);
 
-            var rowPropList = $('<div/>', {
-                class: 'form-row node-swagger-prop-list',
-                style: 'margin-left:10px',
-            }).appendTo(rowPropHeader);
+            var contentList = $('<div/>', {
+                class: 'node-swagger-response-content-list',
+                style: 'margin-top: 10px; padding: 5px; border: 1px solid #ddd; border-radius: 3px; min-height: 80px;',
+            }).appendTo(nameRows);
 
-            if (opts.schema && opts.schema.properties) {
-                var props = opts.schema.properties;
-                for (var prop in props) {
-                    var propOpt = opts.schema.properties[prop];
-                    propOpt.name = prop;
-                    createPropertyRow(propOpt).appendTo(rowPropList);
-                }
+            // Add content type entry creator
+            function createContentEntry(mediaType, schema) {
+                var entry = $('<div/>', {
+                    class: 'node-swagger-content-entry',
+                    style: 'margin-bottom: 10px; padding: 10px; background: #f9f9f9; border: 1px solid #eee; border-radius: 3px;',
+                }).appendTo(contentList);
+
+                var typeRow = $('<div/>', {
+                    style: 'display: flex; gap: 10px; margin-bottom: 8px; align-items: center;',
+                }).appendTo(entry);
+
+                $('<label/>', {
+                    style: 'width: 100px; font-weight: bold;',
+                }).text('Media Type').appendTo(typeRow);
+
+                $('<input/>', {
+                    type: 'text',
+                    class: 'node-swagger-content-type',
+                    placeholder: 'e.g., application/json',
+                    style: 'flex: 1;',
+                }).val(mediaType || 'application/json').appendTo(typeRow);
+
+                var removeBtn = $('<a/>', {
+                    href: '#',
+                    class: 'red-ui-button red-ui-button-small',
+                }).appendTo(typeRow);
+                $('<i/>', { class: 'fa fa-remove' }).appendTo(removeBtn);
+                removeBtn.click(function(e) {
+                    entry.slideUp(100, function() {
+                        entry.remove();
+                    });
+                    e.preventDefault();
+                });
+
+                var schemaRow = $('<div/>').appendTo(entry);
+                $('<label/>', {
+                    style: 'display: block; font-weight: bold; margin-bottom: 4px;',
+                }).text('Schema').appendTo(schemaRow);
+                $('<textarea/>', {
+                    class: 'node-swagger-content-schema',
+                    style: 'width: 100%; height: 100px; font-family: monospace; font-size: 12px;',
+                    placeholder: '{"type": "object", "properties": {}}',
+                }).val(schema || '').appendTo(schemaRow);
+
+                return entry;
             }
 
-            addPropButton.click(function (e) {
-                createPropertyRow({}).appendTo(rowPropList);
-                var scrollContainer = $('#node-config-parameter-list').parent();
-                scrollContainer.scrollTop(scrollContainer.prop('scrollHeight'));
+            // Load existing content types
+            if (opts.content && typeof opts.content === 'object') {
+                Object.keys(opts.content).forEach(function(mediaType) {
+                    var schemaJson = '';
+                    if (opts.content[mediaType].schema) {
+                        schemaJson = JSON.stringify(opts.content[mediaType].schema, null, 2);
+                    }
+                    createContentEntry(mediaType, schemaJson);
+                });
+            } else if (opts.schemaJson) {
+                // Backward compatibility: convert old schemaJson format
+                createContentEntry('application/json', opts.schemaJson);
+            } else {
+                // Default empty content type
+                createContentEntry('application/json', '');
+            }
+
+            addContentButton.click(function(e) {
+                createContentEntry('application/json', '');
                 e.preventDefault();
             });
 
@@ -613,6 +692,7 @@
                 responses: { value: null },
                 requestBody: { value: null },
                 deprecated: { value: false },
+                customPath: { value: '' },
             },
             label: function () {
                 return this.summary || 'swagger doc';
@@ -741,6 +821,7 @@
 
             oneditsave: function () {
                 var node = this;
+                node.customPath = $('#node-config-input-customPath').val();
 
                 var params = [];
                 $('#node-config-parameter-list li').each(function () {
@@ -909,45 +990,29 @@
                     }
                     var desc = $(this).find('.node-swagger-description').val();
                     response.description = desc || '';
-                    var properties = {};
-                    $(this)
-                        .find('.node-swagger-prop-list')
-                        .children('.node-swagger-property-name-row')
-                        .each(function () {
-                            var property = {};
-                            var name = $(this).find('.node-swagger-type-name').val();
-
-                            var row = $(this).find('.node-swagger-type-top-row');
-
-                            var current = property;
-                            var ctype = row.children('.node-swagger-type-select').val();
-
-                            if (ctype) {
-                                if (ctype != 'ref') {
-                                    current.type = ctype;
-                                    if (current.type == 'array') {
-                                        var collFormat = row.children('.node-swagger-type-collection-format').val();
-                                        if (collFormat) current.collectionFormat = collFormat;
-                                        var nextRow = row.children('.node-swagger-type-row');
-                                        current.items = getArrayItems(nextRow);
-                                    } else {
-                                        var format = row.children('.node-swagger-type-format').val();
-                                        if (format) {
-                                            current.format = format;
-                                        }
-                                    }
-                                } else {
-                                    current['$ref'] = row.children('.node-swagger-type-format').val();
-                                }
+                    
+                    // Capture OpenAPI 3.0 content object with multiple media types
+                    var content = {};
+                    $(this).find('.node-swagger-content-entry').each(function() {
+                        var mediaType = $(this).find('.node-swagger-content-type').val();
+                        var schemaJson = $(this).find('.node-swagger-content-schema').val();
+                        
+                        if (mediaType && schemaJson) {
+                            try {
+                                content[mediaType] = {
+                                    schema: JSON.parse(schemaJson)
+                                };
+                            } catch (e) {
+                                // If schema fails to parse, store as string example
+                                content[mediaType] = {
+                                    example: schemaJson
+                                };
                             }
-
-                            properties[name] = property;
-                        });
-
-                    if (Object.keys(properties).length > 0) {
-                        response.schema = {
-                            properties: properties,
-                        };
+                        }
+                    });
+                    
+                    if (Object.keys(content).length > 0) {
+                        response.content = content;
                     }
 
                     responses[respCode] = response;

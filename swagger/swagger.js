@@ -97,9 +97,12 @@ module.exports = function (RED) {
                     const swaggerDocNode = RED.nodes.getNode(swaggerDoc);
 
                     if (swaggerDocNode) {
+                        // Use custom path if provided, otherwise use HTTP node path
+                        const basePath = swaggerDocNode.customPath || url;
+                        
                         // Convert Node-RED path parameters to OpenAPI format
                         const endPoint = stripTerminalSlash(
-                            ensureLeadingSlash(url.replace(regexColons, convToSwaggerPath)),
+                            ensureLeadingSlash(basePath.replace(regexColons, convToSwaggerPath)),
                         );
 
                         if (!resp.paths[endPoint]) resp.paths[endPoint] = {};
@@ -176,13 +179,47 @@ module.exports = function (RED) {
                                     description: responseDetails.description || 'No description',
                                 };
 
-                                // Add content if schema exists
-                                if (responseDetails.schema) {
-                                    operation.responses[status].content = {
-                                        'application/json': {
-                                            schema: responseDetails.schema,
-                                        },
-                                    };
+                                // Handle OpenAPI 3.0 content structure
+                                if (responseDetails.content && typeof responseDetails.content === 'object') {
+                                    operation.responses[status].content = {};
+                                    
+                                    Object.keys(responseDetails.content).forEach((mediaType) => {
+                                        const mediaTypeData = responseDetails.content[mediaType];
+                                        operation.responses[status].content[mediaType] = {};
+                                        
+                                        // Handle schema - could be object or was a parsed string
+                                        if (mediaTypeData.schema) {
+                                            operation.responses[status].content[mediaType].schema = mediaTypeData.schema;
+                                        } else if (mediaTypeData.example) {
+                                            // If parsing failed and we stored as example, try to re-parse
+                                            try {
+                                                operation.responses[status].content[mediaType].schema = 
+                                                    typeof mediaTypeData.example === 'string'
+                                                        ? JSON.parse(mediaTypeData.example)
+                                                        : mediaTypeData.example;
+                                            } catch (e) {
+                                                operation.responses[status].content[mediaType].example = mediaTypeData.example;
+                                            }
+                                        }
+                                    });
+                                } else if (responseDetails.schemaJson) {
+                                    // Backward compatibility with old format
+                                    let schema = null;
+                                    try {
+                                        schema = typeof responseDetails.schemaJson === 'string'
+                                            ? JSON.parse(responseDetails.schemaJson)
+                                            : responseDetails.schemaJson;
+                                    } catch (e) {
+                                        console.warn(`Failed to parse schema JSON for response ${status}:`, e);
+                                    }
+                                    if (schema) {
+                                        const contentType = responseDetails.contentType || 'application/json';
+                                        operation.responses[status].content = {
+                                            [contentType]: {
+                                                schema: schema,
+                                            },
+                                        };
+                                    }
                                 }
                             });
                         }
@@ -238,6 +275,7 @@ module.exports = function (RED) {
         this.responses = n.responses || {};
         this.requestBody = n.requestBody || null;
         this.deprecated = n.deprecated || false;
+        this.customPath = n.customPath || '';
     }
     RED.nodes.registerType('swagger-doc', SwaggerDoc);
 
