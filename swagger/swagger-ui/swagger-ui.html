@@ -387,6 +387,17 @@
                 if (swaggerUiIndex !== -1) {
                     pathParts = pathParts.slice(0, swaggerUiIndex);
                 }
+                const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if(isLocalHost) {
+                    pathParts = []; // I'm bruteforcing this behaviour. I fucking hate how inconsistent and picky URLs are.
+                }
+
+                let windowOrigin = window.location.origin;
+                if (windowOrigin.endsWith('/')) {
+                    
+                } else {
+                    windowOrigin += '/';
+                }
                 const appRoot = pathParts.join('/');
 
                 const ui = SwaggerUIBundle({
@@ -400,6 +411,7 @@
                     plugins: [SwaggerUIBundle.plugins.DownloadUrl],
                     layout: 'StandaloneLayout',
                 });
+
 
                 window.ui = ui;
             };
