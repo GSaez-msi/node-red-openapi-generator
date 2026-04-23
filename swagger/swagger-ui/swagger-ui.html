@@ -5,12 +5,6 @@
         <link rel="stylesheet" type="text/css" href="swagger-ui.css" />
         <style>
 
-            .dark-mode-toggle:hover {
-                background: #2563eb;
-                transform: translateY(-1px);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            }
-
             /* Dark mode styles */
             [data-theme="dark"] {
                 color-scheme: dark;
@@ -57,42 +51,6 @@
                 overflow: visible !important;
             }
 
-            /* Adjust toggle button for smaller screens */
-            .dark-mode-toggle {
-                position: fixed;
-                top: 15px;
-                right: 15px;
-                z-index: 9999;
-                background: #3b82f6;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                padding: 8px 12px;
-                cursor: pointer;
-                font-size: 12px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-                transition: all 0.3s ease;
-            }
-
-            /* Responsive adjustments */
-            @media (max-width: 768px) {
-                [data-theme="dark"] .swagger-ui .topbar .download-url-wrapper {
-                    margin-right: 100px !important;
-                }
-
-                [data-theme="dark"] .swagger-ui .topbar .download-url-wrapper .btn {
-                    padding: 4px 8px !important;
-                    font-size: 11px !important;
-                }
-
-                .dark-mode-toggle {
-                    top: 12px;
-                    right: 12px;
-                    padding: 6px 8px;
-                    font-size: 10px;
-                }
-            }
-
             [data-theme="dark"] .swagger-ui .info {
                 background: #1e293b;
             }
@@ -101,8 +59,63 @@
                 color: #f8fafc !important;
             }
 
+            /* Scheme container - servers and authorize */
             [data-theme="dark"] .swagger-ui .scheme-container {
-                display: none !important;
+                background: #334155;
+                border: 1px solid #475569;
+                border-radius: 4px;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container .schemes {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container .schemes > label {
+                color: #f8fafc;
+                font-weight: 500;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container select {
+                background: #475569;
+                color: #f8fafc;
+                border: 1px solid #64748b;
+                border-radius: 4px;
+                padding: 6px 10px;
+                font-size: 14px;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container select:focus {
+                border-color: #3b82f6;
+                outline: none;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container select option {
+                background: #334155;
+                color: #f8fafc;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container .btn.authorize {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container .btn.authorize:hover {
+                background: #2563eb;
+            }
+
+            [data-theme="dark"] .swagger-ui .scheme-container .btn.authorize.authorizationScopesDisabled {
+                opacity: 0.6;
+                cursor: not-allowed;
             }
 
             [data-theme="dark"] .swagger-ui .opblock-tag {
@@ -314,70 +327,14 @@
     </head>
 
     <body>
-        <button class="dark-mode-toggle" id="darkModeToggle">
-            🌙 Dark
-        </button>
-
         <div id="swagger-ui"></div>
 
         <script src="swagger-ui-bundle.js"></script>
         <script src="swagger-ui-standalone-preset.js"></script>
         <script>
-            // Dark mode functionality
-            class DarkModeManager {
-                constructor() {
-                    this.button = document.getElementById('darkModeToggle');
-                    this.init();
-                }
-
-                init() {
-                    // Check for saved theme preference or default to system preference
-                    const savedTheme = localStorage.getItem('swagger-theme');
-                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (savedTheme) {
-                        this.setTheme(savedTheme);
-                    } else if (systemPrefersDark) {
-                        this.setTheme('dark');
-                    } else {
-                        this.setTheme('light');
-                    }
-
-                    // Listen for system theme changes
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                        if (!localStorage.getItem('swagger-theme')) {
-                            this.setTheme(e.matches ? 'dark' : 'light');
-                        }
-                    });
-
-                    // Button click handler
-                    this.button.addEventListener('click', () => {
-                        const currentTheme = document.documentElement.getAttribute('data-theme');
-                        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                        this.setTheme(newTheme);
-                        localStorage.setItem('swagger-theme', newTheme);
-                    });
-                }
-
-                setTheme(theme) {
-                    document.documentElement.setAttribute('data-theme', theme);
-                    this.updateButton(theme);
-                }
-
-                updateButton(theme) {
-                    if (theme === 'dark') {
-                        this.button.innerHTML = '☀️ Light';
-                        this.button.style.background = '#f59e0b';
-                    } else {
-                        this.button.innerHTML = '🌙 Dark';
-                        this.button.style.background = '#3b82f6';
-                    }
-                }
-            }
-
             window.onload = function () {
-                // Initialize dark mode
-                new DarkModeManager();
+                // Set dark mode as default theme
+                document.documentElement.setAttribute('data-theme', 'dark');
 
                 // Initialize Swagger UI (grab the JSON file)
                 let pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -393,9 +350,7 @@
                 }
 
                 let windowOrigin = window.location.origin;
-                if (windowOrigin.endsWith('/')) {
-                    
-                } else {
+                if (!windowOrigin.endsWith('/')) {
                     windowOrigin += '/';
                 }
                 const appRoot = pathParts.join('/');
