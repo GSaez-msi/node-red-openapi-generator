@@ -344,19 +344,27 @@
                 if (swaggerUiIndex !== -1) {
                     pathParts = pathParts.slice(0, swaggerUiIndex);
                 }
-                const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                if(isLocalHost) {
-                    pathParts = []; // I'm bruteforcing this behaviour. I fucking hate how inconsistent and picky URLs are.
-                }
 
                 let windowOrigin = window.location.origin;
-                if (!windowOrigin.endsWith('/')) {
-                    windowOrigin += '/';
+                if(windowOrigin.endsWith('//')) {
+                    windowOrigin = windowOrigin.slice(0, -1);
                 }
+
                 const appRoot = pathParts.join('/');
 
+                let urlToUse = `${windowOrigin}/${appRoot}/http-api/swagger.json`;
+
+                const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if(isLocalHost) {
+                    urlToUse = `${windowOrigin}/http-api/swagger.json`;
+                }
+
+                // Normalize URL: remove double slashes (but preserve protocol://)
+                //did you know that javascript fucking sucks? this is the 4th way i've tried to fix this shit and i'm hoping this version is the one that works because otherwise i'm just going to explode.
+                urlToUse = urlToUse.replace(/([^:\s])\/{2,}/g, '$1/');
+
                 const ui = SwaggerUIBundle({
-                    url: `${window.location.origin}${appRoot}/http-api/swagger.json`,
+                    url: urlToUse,
                     dom_id: '#swagger-ui',
                     deepLinking: true,
                     presets: [

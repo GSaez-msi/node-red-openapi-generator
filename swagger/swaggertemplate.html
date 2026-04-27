@@ -1,11 +1,13 @@
 <script type="text/javascript">
     RED.nodes.registerType('swaggertemplate', {
         category: 'network',
+        color: '#BA00AE',
         defaults: {
             name: { value: "" },
             active: { value: true },
             template: { value: "{}" }
         },
+        icon: "icons/template.svg",
         label: function () {
             return this.name || "OpenAPI Template";
         },
